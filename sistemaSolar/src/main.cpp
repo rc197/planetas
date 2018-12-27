@@ -21,6 +21,8 @@ void funKeyboard(unsigned char key, int x, int y);
 void funSpecial(int key, int x, int y);
 void funMouse(int button, int state, int x, int y);
 void funMotion(int x, int y);
+void funTimer(int value);
+
 
 void setLights(glm::mat4 P, glm::mat4 V);
 void drawPlanetas(glm::mat4 P, glm::mat4 V, glm::mat4 M);
@@ -38,7 +40,7 @@ void drawPluto(Material material, Texture *texture, GLfloat mixValue, glm::mat4 
 // Viewport
 int w = 500;
 int h = 500;
-
+GLfloat distancia = 30.0f;
 // Dimensiones
 GLfloat radSol = 695.508 / 15;
 GLfloat radMer = 2.44 / 3;
@@ -63,6 +65,9 @@ GLfloat distPlu = 5934.456f;
 
 
 // Animaciones
+GLint speed = 50;
+GLfloat rotPlaneta = 0.0f;
+bool dibujar = true;
 GLfloat rotX = 0.0f;
 GLfloat rotY = 0.0f;
 GLfloat desZ = 0.0f;
@@ -139,6 +144,7 @@ int main(int argc, char** argv) {
     glutSpecialFunc(funSpecial);
     glutMouseFunc(funMouse);
     glutMotionFunc(funMotion);
+    glutTimerFunc(speed, funTimer, 0);
 
     // Bucle principal
     glutMainLoop();
@@ -265,9 +271,9 @@ void funDisplay() {
 
     // Matriz de Vista V (Cámara)
     GLfloat PI = glm::pi<float>();
-    GLfloat x = 10.0f * glm::cos(Yc * PI / 180.0f) * glm::sin(Xc * PI / 180.0f);
-    GLfloat y = 10.0f * glm::sin(Yc * PI / 180.0f);
-    GLfloat z = 10.0f * glm::cos(Yc * PI / 180.0f) * glm::cos(Xc * PI / 180.0f);
+    GLfloat x = 40.0f * glm::cos(Yc * PI / 180.0f) * glm::sin(Xc * PI / 180.0f);
+    GLfloat y = 50.0f* glm::cos(Yc * PI / 180.0f) * glm::cos(Xc * PI / 180.0f);
+    GLfloat z = 40.0f ;
     glm::vec3 pos(x, y, z);
     glm::vec3 lookat(0.0f, 0.0f, -1.0f);
     glm::vec3 up(0.0f, 1.0f, 0.0f);
@@ -281,13 +287,12 @@ void funDisplay() {
     setLights(P, V);
 
     // Dibujamos la escena
-    glm::mat4 S = glm::scale(I, glm::vec3(4.0f, 1.0f, 4.0f));
-    glm::mat4 T = glm::translate(I, glm::vec3(0.0f, -3.0f, 0.0f));
+
     glm::mat4 Ry = glm::rotate(I, glm::radians(rotY), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 Rx = glm::rotate(I, glm::radians(rotX), glm::vec3(1.0f, 0.0f, 0.0f));
     glm::mat4 Tz = glm::translate(I, glm::vec3(0.0f, 0.0f, desZ));
     drawPlanetas(P, V, Tz * Rx * Ry);
-    
+
     // Intercambiamos los buffers
     glutSwapBuffers();
 
@@ -312,8 +317,8 @@ void setLights(glm::mat4 P, glm::mat4 V) {
 
 }
 
-void drawPlanetas(glm::mat4 P, glm::mat4 V, glm::mat4 M){
-    drawSun(matRuby, texSun, 0.8f, P, V, M);
+void drawPlanetas(glm::mat4 P, glm::mat4 V, glm::mat4 M) {
+    drawSun(matRuby, texSun, 0.75f, P, V, M);
     drawMercury(matRuby, texMercury, 1.0f, P, V, M);
     drawVenus(matRuby, texVenus, 1.0f, P, V, M);
     drawEarth(matRuby, texEarth, 1.0f, P, V, M);
@@ -326,7 +331,8 @@ void drawPlanetas(glm::mat4 P, glm::mat4 V, glm::mat4 M){
 }
 
 void drawSun(Material material, Texture *texture, GLfloat mixValue, glm::mat4 P, glm::mat4 V, glm::mat4 M) {
-    //M=glm::scale(M, glm::vec3(radSol, radSol, radSol));
+    M = glm::translate(M, glm::vec3(-0.5, 0.0f, 0.0f));
+    M = glm::scale(M, glm::vec3(5.0f, 5.0f, 5.0f));
     objShaders->setMat4("uN", glm::transpose(glm::inverse(M)));
     objShaders->setMat4("uM", M);
     objShaders->setMat4("uPVM", P * V * M);
@@ -338,8 +344,11 @@ void drawSun(Material material, Texture *texture, GLfloat mixValue, glm::mat4 P,
 }
 
 void drawMercury(Material material, Texture *texture, GLfloat mixValue, glm::mat4 P, glm::mat4 V, glm::mat4 M) {
-    M = glm::scale(M, glm::vec3(radMer, radMer, radMer));
-    M = glm::translate(M, glm::vec3(distMer, 0.0f, 0.0f));
+
+    M = glm::rotate(M, glm::radians(rotPlaneta), glm::vec3(0.0f, 1.0f, 0.0f));
+    M = glm::translate(M, glm::vec3(distancia/2, 0.0f, 0.0f));
+    M = glm::scale(M, glm::vec3(0.6f, 0.6f, 0.6f));
+    M = glm::rotate(M, glm::radians(rotPlaneta), glm::vec3(0.0f, 1.0f, 0.0f));
     objShaders->setMat4("uN", glm::transpose(glm::inverse(M)));
     objShaders->setMat4("uM", M);
     objShaders->setMat4("uPVM", P * V * M);
@@ -351,8 +360,10 @@ void drawMercury(Material material, Texture *texture, GLfloat mixValue, glm::mat
 }
 
 void drawVenus(Material material, Texture *texture, GLfloat mixValue, glm::mat4 P, glm::mat4 V, glm::mat4 M) {
-    M = glm::scale(M, glm::vec3(radVen, radVen, radVen));
-    M = glm::translate(M, glm::vec3(distVen, 0.0f, 0.0f));
+
+    M = glm::rotate(M, glm::radians(rotPlaneta), glm::vec3(0.0f, 1.0f, 0.0f));
+    M = glm::translate(M, glm::vec3(2*distancia/2, 0.0f, 0.0f));
+    M = glm::scale(M, glm::vec3(1.7f, 1.7f, 1.7f));
     objShaders->setMat4("uN", glm::transpose(glm::inverse(M)));
     objShaders->setMat4("uM", M);
     objShaders->setMat4("uPVM", P * V * M);
@@ -364,8 +375,10 @@ void drawVenus(Material material, Texture *texture, GLfloat mixValue, glm::mat4 
 }
 
 void drawEarth(Material material, Texture *texture, GLfloat mixValue, glm::mat4 P, glm::mat4 V, glm::mat4 M) {
-    M = glm::scale(M, glm::vec3(radTier, radTier, radTier));
-    M = glm::translate(M, glm::vec3(distTier, 0.0f, 0.0f));
+
+    M = glm::rotate(M, glm::radians(rotPlaneta), glm::vec3(0.0f, 1.0f, 0.0f));
+    M = glm::translate(M, glm::vec3(3*distancia/2, 0.0f, 0.0f));
+    M = glm::scale(M, glm::vec3(1.9f, 1.9f, 1.9f));
     objShaders->setMat4("uN", glm::transpose(glm::inverse(M)));
     objShaders->setMat4("uM", M);
     objShaders->setMat4("uPVM", P * V * M);
@@ -377,8 +390,8 @@ void drawEarth(Material material, Texture *texture, GLfloat mixValue, glm::mat4 
 }
 
 void drawMars(Material material, Texture *texture, GLfloat mixValue, glm::mat4 P, glm::mat4 V, glm::mat4 M) {
-    M = glm::scale(M, glm::vec3(radMar, radMar, radMar));
-    M = glm::translate(M, glm::vec3(distMar, 0.0f, 0.0f));
+    M = glm::rotate(M, glm::radians(rotPlaneta), glm::vec3(0.0f, 1.0f, 0.0f));
+    M = glm::translate(M, glm::vec3(4*distancia/2, 0.0f, 0.0f));
     objShaders->setMat4("uN", glm::transpose(glm::inverse(M)));
     objShaders->setMat4("uM", M);
     objShaders->setMat4("uPVM", P * V * M);
@@ -390,8 +403,9 @@ void drawMars(Material material, Texture *texture, GLfloat mixValue, glm::mat4 P
 }
 
 void drawJupiter(Material material, Texture *texture, GLfloat mixValue, glm::mat4 P, glm::mat4 V, glm::mat4 M) {
-    M = glm::scale(M, glm::vec3(radJup, radJup, radJup));
-    M = glm::translate(M, glm::vec3(distJup, 0.0f, 0.0f));
+    M = glm::rotate(M, glm::radians(rotPlaneta), glm::vec3(0.0f, 1.0f, 0.0f));
+    M = glm::translate(M, glm::vec3(6*distancia, 0.0f, 0.0f));
+    M = glm::scale(M, glm::vec3(3.5f, 3.5f, 3.5f));
     objShaders->setMat4("uN", glm::transpose(glm::inverse(M)));
     objShaders->setMat4("uM", M);
     objShaders->setMat4("uPVM", P * V * M);
@@ -403,8 +417,10 @@ void drawJupiter(Material material, Texture *texture, GLfloat mixValue, glm::mat
 }
 
 void drawSaturn(Material material, Texture *texture, GLfloat mixValue, glm::mat4 P, glm::mat4 V, glm::mat4 M) {
-    M = glm::scale(M, glm::vec3(radSat, radSat, radSat));
-    M = glm::translate(M, glm::vec3(distSat, 0.0f, 0.0f));
+
+    M = glm::rotate(M, glm::radians(rotPlaneta), glm::vec3(0.0f, 1.0f, 0.0f));
+    M = glm::translate(M, glm::vec3(8*distancia, 0.0f, 0.0f));
+    M = glm::scale(M, glm::vec3(3.0f, 3.0f, 3.0f));
     objShaders->setMat4("uN", glm::transpose(glm::inverse(M)));
     objShaders->setMat4("uM", M);
     objShaders->setMat4("uPVM", P * V * M);
@@ -416,8 +432,10 @@ void drawSaturn(Material material, Texture *texture, GLfloat mixValue, glm::mat4
 }
 
 void drawUranus(Material material, Texture *texture, GLfloat mixValue, glm::mat4 P, glm::mat4 V, glm::mat4 M) {
-    M = glm::scale(M, glm::vec3(radUr, radUr, radUr));
-    M = glm::translate(M, glm::vec3(distUr, 0.0f, 0.0f));
+
+    M = glm::rotate(M, glm::radians(rotPlaneta), glm::vec3(0.0f, 1.0f, 0.0f));
+    M = glm::translate(M, glm::vec3(10*distancia, 0.0f, 0.0f));
+    M = glm::scale(M, glm::vec3(2.5f, 2.5f, 2.5f));
     objShaders->setMat4("uN", glm::transpose(glm::inverse(M)));
     objShaders->setMat4("uM", M);
     objShaders->setMat4("uPVM", P * V * M);
@@ -429,8 +447,10 @@ void drawUranus(Material material, Texture *texture, GLfloat mixValue, glm::mat4
 }
 
 void drawNeptune(Material material, Texture *texture, GLfloat mixValue, glm::mat4 P, glm::mat4 V, glm::mat4 M) {
-    M = glm::scale(M, glm::vec3(radNep, radNep, radNep));
-    M = glm::translate(M, glm::vec3(distNep, 0.0f, 0.0f));
+
+    M = glm::rotate(M, glm::radians(rotPlaneta), glm::vec3(0.0f, 1.0f, 0.0f));
+    M = glm::translate(M, glm::vec3(12*distancia, 0.0f, 0.0f));
+    M = glm::scale(M, glm::vec3(2.4f, 2.4f, 2.4f));
     objShaders->setMat4("uN", glm::transpose(glm::inverse(M)));
     objShaders->setMat4("uM", M);
     objShaders->setMat4("uPVM", P * V * M);
@@ -442,8 +462,10 @@ void drawNeptune(Material material, Texture *texture, GLfloat mixValue, glm::mat
 }
 
 void drawPluto(Material material, Texture *texture, GLfloat mixValue, glm::mat4 P, glm::mat4 V, glm::mat4 M) {
-    M = glm::scale(M, glm::vec3(radPlu, radPlu, radPlu));
-    M = glm::translate(M, glm::vec3(distPlu, 0.0f, 0.0f));
+
+    M = glm::rotate(M, glm::radians(rotPlaneta), glm::vec3(0.0f, 1.0f, 0.0f));
+    M = glm::translate(M, glm::vec3(14*distancia, 0.0f, 0.0f));
+    M = glm::scale(M, glm::vec3(0.2f, 0.2f, 0.2f));
     objShaders->setMat4("uN", glm::transpose(glm::inverse(M)));
     objShaders->setMat4("uM", M);
     objShaders->setMat4("uPVM", P * V * M);
@@ -456,7 +478,7 @@ void drawPluto(Material material, Texture *texture, GLfloat mixValue, glm::mat4 
 
 void funKeyboard(unsigned char key, int x, int y) {
 
-    switch (key) {
+    /*switch (key) {
         case 'e': desZ -= 0.1f;
             break;
         case 'd': desZ += 0.1f;
@@ -464,13 +486,13 @@ void funKeyboard(unsigned char key, int x, int y) {
         default: desZ = 0.0f;
             break;
     }
-    glutPostRedisplay();
+    glutPostRedisplay();*/
 
 }
 
 void funSpecial(int key, int x, int y) {
 
-    switch (key) {
+    /*switch (key) {
         case GLUT_KEY_UP: rotX -= 5.0f;
             break;
         case GLUT_KEY_DOWN: rotX += 5.0f;
@@ -484,7 +506,7 @@ void funSpecial(int key, int x, int y) {
             rotY = 0.0f;
             break;
     }
-    glutPostRedisplay();
+    glutPostRedisplay();*/
 
 }
 
@@ -510,5 +532,19 @@ void funMotion(int x, int y) {
         Yc = (Yo - (GLfloat) y) / -5.0f;
         glutPostRedisplay();
     }
+
+}
+
+void funTimer(int ignore) {
+
+    if (dibujar) {
+        rotPlaneta += 1.0f;
+        dibujar = false;
+    } else {
+        rotPlaneta += 1.0f;
+        dibujar = true;
+    }
+    glutPostRedisplay();
+    glutTimerFunc(speed, funTimer, 0);
 
 }
